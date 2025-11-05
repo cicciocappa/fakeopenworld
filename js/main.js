@@ -10,7 +10,15 @@ import {
     skyboxVertexShader,
     skyboxFragmentShader,
     billboardVertexShader,
-    billboardFragmentShader
+    billboardFragmentShader,
+    terrainVertexShader,
+    terrainFragmentShader,
+    mattePaintingVertexShader,
+    mattePaintingFragmentShader,
+    skyboxTexturedVertexShader,
+    skyboxTexturedFragmentShader,
+    skyboxCubemapVertexShader,
+    skyboxCubemapFragmentShader
 } from './shaders.js';
 import {
     createGroundMesh,
@@ -18,6 +26,8 @@ import {
     createBillboards,
     createDistantMountains
 } from './geometry.js';
+import { generateProceduralHeightmap, createTerrainMesh } from './terrain.js';
+import { MattePaintingManager } from './matte-painting.js';
 import { mat4Perspective } from './math-utils.js';
 import { Camera } from './camera.js';
 import { Renderer } from './renderer.js';
@@ -39,8 +49,13 @@ function init() {
     const meshProgram = createProgram(gl, meshVertexShader, meshFragmentShader);
     const skyboxProgram = createProgram(gl, skyboxVertexShader, skyboxFragmentShader);
     const billboardProgram = createProgram(gl, billboardVertexShader, billboardFragmentShader);
+    const terrainProgram = createProgram(gl, terrainVertexShader, terrainFragmentShader);
+    const mattePaintingProgram = createProgram(gl, mattePaintingVertexShader, mattePaintingFragmentShader);
+    const skyboxTexturedProgram = createProgram(gl, skyboxTexturedVertexShader, skyboxTexturedFragmentShader);
+    const skyboxCubemapProgram = createProgram(gl, skyboxCubemapVertexShader, skyboxCubemapFragmentShader);
 
-    if (!meshProgram || !skyboxProgram || !billboardProgram) {
+    if (!meshProgram || !skyboxProgram || !billboardProgram || !terrainProgram ||
+        !mattePaintingProgram || !skyboxTexturedProgram || !skyboxCubemapProgram) {
         console.error('Failed to create shader programs');
         return;
     }
@@ -48,16 +63,41 @@ function init() {
     const programs = {
         mesh: meshProgram,
         skybox: skyboxProgram,
-        billboard: billboardProgram
+        billboard: billboardProgram,
+        terrain: terrainProgram,
+        mattePainting: mattePaintingProgram,
+        skyboxTextured: skyboxTexturedProgram,
+        skyboxCubemap: skyboxCubemapProgram
     };
 
     // Crea geometrie
+    console.log('Generating procedural terrain heightmap...');
+    const heightmap = generateProceduralHeightmap(256, 256);
+    console.log('Creating terrain mesh from heightmap...');
+    const terrainMesh = createTerrainMesh(gl, heightmap);
+    console.log(`Terrain mesh created: ${terrainMesh.vertexCount} vertices, ${terrainMesh.indexCount} indices`);
+
     const meshes = {
         ground: createGroundMesh(gl),
         skybox: createSkyboxMesh(gl),
         billboards: createBillboards(gl, 100),
-        mountains: createDistantMountains(gl)
+        mountains: createDistantMountains(gl),
+        terrain: terrainMesh
     };
+
+    // Setup Matte Painting System
+    console.log('Initializing matte painting system...');
+    const mattePaintingManager = new MattePaintingManager(gl);
+    mattePaintingManager.createDefaultLayers(gl);
+
+    // Load cubemap skybox
+    console.log('Loading cubemap skybox...');
+    mattePaintingManager.loadSkyboxCubemap('assets/Daylight Box UV.png');
+
+    // Alternative: Load equirectangular texture instead
+    // mattePaintingManager.loadSkyboxTexture('assets/skybox_panorama.jpg');
+
+    console.log('✓ Matte painting system initialized');
 
     // Setup camera
     const camera = new Camera();
@@ -72,7 +112,7 @@ function init() {
     );
 
     // Crea e avvia renderer
-    const renderer = new Renderer(gl, programs, meshes, camera, projectionMatrix);
+    const renderer = new Renderer(gl, programs, meshes, camera, projectionMatrix, mattePaintingManager);
     renderer.start();
 
     console.log('Fake Open World initialized successfully!');

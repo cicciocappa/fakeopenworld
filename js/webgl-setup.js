@@ -23,5 +23,11 @@ export function initWebGL(canvas) {
     gl.depthFunc(gl.LEQUAL);  // LEQUAL necessario per skybox al far plane
     gl.enable(gl.CULL_FACE);
 
+    // Enable 32-bit indices for large terrain meshes
+    const ext = gl.getExtension('OES_element_index_uint');
+    if (!ext) {
+        console.warn('OES_element_index_uint extension not supported - large meshes may not work');
+    }
+
     return gl;
 }

@@ -7,9 +7,10 @@
  */
 export class Camera {
     constructor() {
-        this.pos = [0, 5, 10];
+        // Start at center of terrain, elevated to see the landscape
+        this.pos = [0, 20, 50];
         this.yaw = 0;
-        this.pitch = 0;
+        this.pitch = -0.3;  // Look slightly downward to see terrain better
         this.forward = [0, 0, -1];
         this.right = [1, 0, 0];
 
