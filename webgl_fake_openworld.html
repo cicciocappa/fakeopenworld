@@ -210,6 +210,7 @@
         }
         
         gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);  // LEQUAL necessario per skybox al far plane
         gl.enable(gl.CULL_FACE);
         
         // ============================================================
@@ -350,7 +351,10 @@
                 
                 // Calcola right vector (perpendicolare alla direzione)
                 const right = [-Math.sin(angle), 0, Math.cos(angle)];
-                
+
+                // Calcola normale che punta verso il centro
+                const normal = [-Math.cos(angle), 0, -Math.sin(angle)];
+
                 const vertices = [];
                 // 4 vertici del piano
                 for (let v of [
@@ -359,7 +363,7 @@
                     [x + right[0] * width/2, height, z + right[2] * width/2],
                     [x - right[0] * width/2, height, z - right[2] * width/2],
                 ]) {
-                    vertices.push(...v, 0, 1, 0, 0, 0);  // pos, normal, uv
+                    vertices.push(...v, ...normal, 0, 0);  // pos, normal, uv
                 }
                 
                 mountains.push(...vertices);
