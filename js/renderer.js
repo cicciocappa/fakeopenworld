@@ -44,22 +44,25 @@ export class Renderer {
         // 1. Render SKYBOX (sempre per primo, no depth write)
         this.renderSkybox(viewMatrix);
 
-        // 2. Render MATTE PAINTING LAYERS (dal più lontano al più vicino)
+        // 2. Render PROCEDURAL SKY (cielo Ghibli con nuvole animate)
+        this.renderProceduralSky(viewMatrix, time);
+
+        // 3. Render MATTE PAINTING LAYERS (dal più lontano al più vicino)
         if (this.mattePaintingManager) {
             this.renderMattePaintingLayers(viewMatrix);
         }
 
-        // 3. Render TERRENO PROCEDURALE con Phong lighting
+        // 4. Render TERRENO PROCEDURALE con Phong lighting
         this.renderTerrain(viewMatrix);
 
         // TEMPORARILY DISABLED - Replaced by matte painting
-        // 4. Render old ground plane
+        // 5. Render old ground plane
         // this.renderGround(viewMatrix);
 
-        // 5. Render MONTAGNE LONTANE (mesh cards) - old version
+        // 6. Render MONTAGNE LONTANE (mesh cards) - old version
         // this.renderMountains(viewMatrix);
 
-        // 6. Render BILLBOARDS (alberi)
+        // 7. Render BILLBOARDS (alberi)
         // this.renderBillboards(viewMatrix);
 
         requestAnimationFrame((t) => this.render(t));
@@ -131,6 +134,52 @@ export class Renderer {
         gl.drawElements(gl.TRIANGLES, mesh.indexCount, gl.UNSIGNED_SHORT, 0);
 
         // Re-enable face culling and depth writing
+        gl.depthMask(true);
+        gl.enable(gl.CULL_FACE);
+    }
+
+    /**
+     * Render cielo procedurale in stile Studio Ghibli
+     * @param {Float32Array} viewMatrix - Matrice view
+     * @param {number} time - Tempo corrente in millisecondi
+     */
+    renderProceduralSky(viewMatrix, time) {
+        const gl = this.gl;
+        const program = this.programs.proceduralSky;
+        const mesh = this.meshes.proceduralSky;
+
+        // Disable depth writing but enable depth test
+        // This ensures the sky is behind everything else
+        gl.depthMask(false);
+
+        // CRITICAL: Disable blending for pure colors (as requested)
+        gl.disable(gl.BLEND);
+
+        // Disable face culling since we're inside the sphere
+        gl.disable(gl.CULL_FACE);
+
+        gl.useProgram(program);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.ibo);
+
+        const posLoc = gl.getAttribLocation(program, 'aPosition');
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 12, 0);
+
+        // Set uniforms
+        gl.uniformMatrix4fv(gl.getUniformLocation(program, 'uViewMatrix'), false, viewMatrix);
+        gl.uniformMatrix4fv(gl.getUniformLocation(program, 'uProjectionMatrix'), false, this.projectionMatrix);
+
+        // Pass time in seconds (performance.now() / 1000)
+        gl.uniform1f(gl.getUniformLocation(program, 'u_time'), time / 1000.0);
+
+        // Pass resolution
+        gl.uniform2f(gl.getUniformLocation(program, 'u_resolution'), gl.canvas.width, gl.canvas.height);
+
+        // Draw the sky sphere using UNSIGNED_INT indices
+        gl.drawElements(gl.TRIANGLES, mesh.indexCount, gl.UNSIGNED_INT, 0);
+
+        // Re-enable depth writing and face culling
         gl.depthMask(true);
         gl.enable(gl.CULL_FACE);
     }
