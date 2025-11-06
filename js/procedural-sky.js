@@ -85,7 +85,7 @@ export const proceduralSkyFragmentShader = `
         vec3 finalSky = mix(skyBase, cloudColor, cloudShape);
 
         // --- Leggera sfumatura verso l'orizzonte (più chiaro in basso) ---
-        finalSky = mix(finalSky, vec3(0.7, 0.85, 0.98), smoothstep(0.0, 0.8, uv.y + 0.5));
+        finalSky = mix(finalSky, vec3(0.7, 0.85, 0.98), smoothstep(0.0, 0.8, -uv.y + 0.5));
 
         // --- Effetto "luce" delicato (simula illuminazione atmosferica) ---
         float glow = 1.0 + 0.2 * sin(uv.y * 3.0 + u_time * 0.1);
