@@ -21,6 +21,11 @@ import {
     skyboxCubemapFragmentShader
 } from './shaders.js';
 import {
+    proceduralSkyVertexShader,
+    proceduralSkyFragmentShader,
+    createProceduralSkyMesh
+} from './procedural-sky.js';
+import {
     createGroundMesh,
     createSkyboxMesh,
     createBillboards,
@@ -53,9 +58,10 @@ function init() {
     const mattePaintingProgram = createProgram(gl, mattePaintingVertexShader, mattePaintingFragmentShader);
     const skyboxTexturedProgram = createProgram(gl, skyboxTexturedVertexShader, skyboxTexturedFragmentShader);
     const skyboxCubemapProgram = createProgram(gl, skyboxCubemapVertexShader, skyboxCubemapFragmentShader);
+    const proceduralSkyProgram = createProgram(gl, proceduralSkyVertexShader, proceduralSkyFragmentShader);
 
     if (!meshProgram || !skyboxProgram || !billboardProgram || !terrainProgram ||
-        !mattePaintingProgram || !skyboxTexturedProgram || !skyboxCubemapProgram) {
+        !mattePaintingProgram || !skyboxTexturedProgram || !skyboxCubemapProgram || !proceduralSkyProgram) {
         console.error('Failed to create shader programs');
         return;
     }
@@ -67,7 +73,8 @@ function init() {
         terrain: terrainProgram,
         mattePainting: mattePaintingProgram,
         skyboxTextured: skyboxTexturedProgram,
-        skyboxCubemap: skyboxCubemapProgram
+        skyboxCubemap: skyboxCubemapProgram,
+        proceduralSky: proceduralSkyProgram
     };
 
     // Crea geometrie
@@ -82,7 +89,8 @@ function init() {
         skybox: createSkyboxMesh(gl),
         billboards: createBillboards(gl, 100),
         mountains: createDistantMountains(gl),
-        terrain: terrainMesh
+        terrain: terrainMesh,
+        proceduralSky: createProceduralSkyMesh(gl, 500, 32)
     };
 
     // Setup Matte Painting System
